@@ -1,3 +1,9 @@
+### DADA2 ###
+#Callahan, B. J., McMurdie, P. J., Rosen, M. J., Han, A. W., Johnson, A. J., & Holmes, S. P. (2016) DADA2: High-resolution sample inference from Illumina amplicon data. Nature Methods, 13. 581–583, https://doi.org/10.1038/nmeth.3869
+# R version 4.2.1
+# DADA2 version 1.24.0
+# stringr_1.5.0, purrr_1.0.1 
+
 library(dada2)
 library(purrr)
 library(stringr)
