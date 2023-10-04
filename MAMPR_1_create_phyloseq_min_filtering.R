@@ -1,3 +1,13 @@
+#R version 4.2.1 (2022-06-23)
+#ggtext_0.1.2, speedyseq_0.5.3.9018, ggsci_3.0.0, foreach_1.5.2, microbiome_1.18.0,
+#DESeq2_1.36.0, SummarizedExperiment_1.28.0, Biobase_2.58.0, MatrixGenerics_1.10.0,
+#matrixStats_0.63.0, GenomicRanges_1.50.2, GenomeInfoDb_1.34.7, IRanges_2.32.0, S4Vectors_0.36.1,
+#BiocGenerics_0.44.0, reshape2_1.4.4, ggrepel_0.9.2, directlabels_2021.1.13, ggpubr_0.5.0
+#phyloseq_1.40.0, picante_1.8.2, nlme_3.1-161, geiger_2.0.10, ape_5.6-2, vegan_2.6-4,
+#lattice_0.20-45, permute_0.9-7, qiime2R_0.99.6, forcats_0.5.2, stringr_1.5.0, dplyr_1.0.10,
+#purrr_1.0.1, readr_2.1.3, tidyr_1.3.0, tibble_3.1.8, ggplot2_3.4.0, tidyverse_1.3.2
+
+
 ###########################################################################
 ############### CREATE + EDIT PHYLOSEQ OBJECT ##################
 ###########################################################################
