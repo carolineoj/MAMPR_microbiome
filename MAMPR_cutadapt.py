@@ -1,4 +1,7 @@
 ### Cutadapt ###
+#Martin, Marcel. (2011) Cutadapt removes adapter sequences from high-throughput sequencing reads. EMBnet.journal, 17:1, 10-12. https://doi.org/10.14806/ej.17.1.200
+#Python 3.6.13
+#Cutadapt version 3.5
 
 import os
 import sys
