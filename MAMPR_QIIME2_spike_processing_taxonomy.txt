@@ -1,0 +1,183 @@
+
+# in QIIME2 command line environment
+
+#set variables
+ori_table  = ori_tab.txt
+ori_seqs = ori_seqs.fna
+
+qiime_seqs = rep-seqs.qza
+qiime_tab = seqtab-nochim.biom/qza
+
+spike_ref_seq = 16Sspike_ref.qza
+
+taxonomy = taxonomy
+
+#
+##
+###Import dada2 results into qiime2
+
+#Import fasta sequences
+
+#Create artifact
+qiime tools import \
+--input-path ori_seqs.fna \
+--type 'FeatureData[Sequence]' \
+--output-path rep-seqs.qza
+
+#Create visualization
+#qiime feature-table tabulate-seqs \
+--i-data rep-seqs.qza \
+--o-visualization rep-seqs.qzv
+
+#Import ASV/OTU table
+
+biom convert -i ori_tab.txt -o seqtab-nochim.biom --table-type="OTU table" --to-hdf5 #convert to biom format
+
+#import to qiime2
+qiime tools import \
+--input-path seqtab-nochim.biom \
+--type 'FeatureTable[Frequency]' \
+--input-format BIOMV210Format \
+--output-path seqtab-nochim.qza
+
+#
+##
+### Spike quality control
+
+
+#Remove_spikes
+
+qiime quality-control exclude-seqs \
+--i-query-sequences rep-seqs.qza \ #imported fasta sequences
+ --i-reference-sequences 16Sspike_ref.qza \ #qiime2 artifact of 16S spike sequence
+#--i-reference-sequences ITSspike_ref.qza \ #qiime2 artifact of ITS spike sequence
+--p-method blast \ #identify spikes by blast
+--p-perc-identity 0.97 \
+--p-perc-query-aligned 0.80 \
+--o-sequence-hits rep-seqs_spike.qza \ #export spike sequences to this file
+--o-sequence-misses rep-seqs_nonspike.qza #export nonspike sequences to this file
+
+#Visualize spikes
+#Use this table to retrieve number of reads per spike
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs_spike.qza \
+  --o-visualization rep-seqs_spike.qzv 
+
+
+#Remove E.coli (used to grow spikes) .995 = one mismatch, if 16S data set
+qiime quality-control exclude-seqs \
+--i-query-sequences rep-seqs_nonspike.qza \
+ --i-reference-sequences Ecoli_TOP10_16S.qza \ #qiime2 artifact of Ecoli 16S fragment
+--p-method blast \
+--p-perc-identity 0.995 \
+--p-perc-query-aligned 0.80 \
+--o-sequence-hits rep-seqs_ecoli.qza \ #E. coli hits
+--o-sequence-misses rep-seqs_nonspike_noec.qza #Not E. coli, not spike sequence hits
+
+#Visualize E.coli sequences
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs_ecoli.qza \
+  --o-visualization rep-seqs_ecoli.qzv
+
+
+#Visualize nonspikes, non-ecoli.
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs_nonspike_noec.qza \
+  --o-visualization rep-seqs_nonspike_noec.qzv
+
+
+
+#Use sorted sequences to filter ASV frequency tables
+
+#feature table for nonspikes, no ecoli
+qiime feature-table filter-features \
+  --i-table seqtab-nochim.qza \
+  --m-metadata-file rep-seqs_nonspike_noec.qza \
+  --o-filtered-table seqtab-nochim_nonspike_noec.qza 
+
+#visualize table
+qiime feature-table summarize \
+  --i-table seqtab-nochim_nonspike_noec.qza \
+  --o-visualization seqtab-nochim_nonspike_noec.qzv 
+
+
+#feature table for spikes 
+qiime feature-table filter-features \
+  --i-table seqtab-nochim.qza \
+  --m-metadata-file rep-seqs_spike.qza \
+  --o-filtered-table seqtab-nochim_spike.qza 
+
+#visualize table
+qiime feature-table summarize \
+  --i-table seqtab-nochim_spike.qza \
+  --o-visualization seqtab-nochim_spike.qzv
+
+#feature table for E coli 
+qiime feature-table filter-features \
+  --i-table seqtab-nochim.qza \
+  --m-metadata-file rep-seqs_ecoli.qza \
+  --o-filtered-table seqtab-nochim_ecoli.qza 
+
+#visualize table
+qiime feature-table summarize \
+  --i-table seqtab-nochim_ecoli.qza  \
+  --o-visualization seqtab-nochim_ecoli.qzv
+
+
+
+
+#
+##
+### Classify and build tree
+
+#Train classifier if necessary
+#import sequence file
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path 99_otus.fasta \
+  --output-path 99_otus.qza
+
+#import taxonomy
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --input-path 99_otu_taxonomy.txt \
+  --output-path ref-taxonomy.qza
+
+#Train classifer
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads 99_otus.qza \
+  --i-reference-taxonomy ref-taxonomy.qza \
+  --o-classifier classifier.qza #this is the classifier object
+
+# Classify
+qiime feature-classifier classify-sklearn \
+--i-classifier CLASSIFIER_SILVA-138_799F1193R_nospecies.qza \ #Pretrained classifier
+--i-reads rep-seqs_nonspike_noec.qza \
+--o-classification taxonomy_nonspike_noec.qza #classified output
+
+#qiime metadata tabulate \
+--m-input-file taxonomy_nonspike_noec.qza \
+--o-visualization taxonomy_nonspike_noec.qzv
+
+
+
+
+
+
+
+#Build trees
+qiime phylogeny align-to-tree-mafft-fasttree \
+--i-sequences rep-seqs_nonspike_noec.qza \
+--o-alignment rep-seqs_nonspike_noec_aligned.qza \
+--o-masked-alignment rep-seqs_nonspike_noec_masked-aligned.qza \
+--o-tree rep-seqs_nonspike_unrooted_noec-tree.qza \
+--o-rooted-tree rep-seqs_nonspike_noec_rooted-tree.qza
+
+
+
+
+
+#Objects used by phyloseq, are ASV/OTU table, the rooted tree, the taxonomy file. Use the experimental samples (no spike, no E. coli)
+
+
