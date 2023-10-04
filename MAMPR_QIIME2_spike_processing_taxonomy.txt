@@ -1,5 +1,8 @@
+#### in QIIME2 command line environment ####
+#Bolyen, E. et al. (2019) Reproducible, interactive, scalable and extensible microbiome data science using QIIME2. Nature Biotechnology, 37: 8, 852-857. 10.1038/s41587-019-0209-9
+#qiime2-2022.8
+#Python 3.6.13
 
-# in QIIME2 command line environment
 
 #set variables
 ori_table  = ori_tab.txt
